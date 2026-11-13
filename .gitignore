@@ -218,3 +218,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Arquivos locais do planejamento ClimateWatch (regras preservadas por solicitação)
+02_CLIMATEWATCH_PROMPT_CODEX.md
+docs/planning
+docs/plan.md
+docs/learning-notes.md
+CHANGELOG.md
+AGENTS.md
+spark-warehouse/
+data/raw/
+data/warehouse/
+data/state/
