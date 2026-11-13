@@ -39,5 +39,6 @@ Uma execução de retomada compartilha um orçamento de no máximo 30 requests e
 - Cobertura do backfill compara timestamps horários únicos normalizados com o intervalo esperado; duplicatas e horários extras são reportados separadamente e não compensam lacunas.
 - Falha de disco: não marcar lote como concluído; libere espaço por procedimento manual, preservando raw existente, depois retome.
 - Dados corrigidos pela fonte: `--force-refresh` no downloader ignora lote concluído; se a coleta falhar, a intenção fica no manifesto e a retomada também ignora o cache anterior. Conteúdo com novo hash é acrescentado em `versions`, sem apagar versão anterior.
+- Raw removido de lote concluído: a próxima execução detecta a ausência, reabre o lote e consulta a origem ignorando o cache. O payload recuperado é gravado antes de voltar a `succeeded`; hash já registrado não cria uma versão duplicada.
 
 O processo garante idempotência de arquivos com conteúdo igual, não exactly-once transacional entre API, cache, raw e manifesto.
