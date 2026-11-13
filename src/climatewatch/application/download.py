@@ -70,7 +70,7 @@ def download_weather(
                     end=end,
                     variables=variables,
                     timezone_name=location.timezone_name,
-                    bypass_cache=force_refresh,
+                    bypass_cache=force_refresh or entry.get("force_refresh_pending", False),
                 )
             except Exception as source_error:
                 invalid_body = getattr(source_error, "body", None)

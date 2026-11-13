@@ -47,8 +47,16 @@ class WeatherHttpClient:
         end: str,
         variables: list[str],
         timezone_name: str,
+        max_response_bytes: int | None = None,
     ) -> tuple[bytes, dict[str, Any]]:
         """Busca payload histórico e retorna bytes íntegros e metadados seguros."""
+        response_limit = (
+            self.max_response_bytes
+            if max_response_bytes is None
+            else min(self.max_response_bytes, max_response_bytes)
+        )
+        if response_limit < 1:
+            raise ValueError("max_response_bytes precisa ser positivo")
         query = urllib.parse.urlencode(
             {
                 "latitude": latitude,
@@ -65,11 +73,13 @@ class WeatherHttpClient:
         try:
             with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
                 content_length = response.headers.get("Content-Length")
-                if content_length and int(content_length) > self.max_response_bytes:
+                if content_length and int(content_length) > response_limit:
                     raise WeatherSourceError("resposta excede limite de bytes", response.status)
-                body = response.read(self.max_response_bytes + 1)
-                if len(body) > self.max_response_bytes:
-                    raise WeatherSourceError("resposta excede limite de bytes", response.status)
+                body = response.read(response_limit + 1)
+                if len(body) > response_limit:
+                    raise WeatherSourceError(
+                        "resposta excede limite de bytes", response.status, body=body
+                    )
                 if response.status != 200:
                     raise WeatherSourceError(f"origem retornou HTTP {response.status}")
                 try:

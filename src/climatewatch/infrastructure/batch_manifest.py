@@ -49,6 +49,8 @@ class BatchManifest:
             }
             entry.update(status="running", started_at=self._now(), updated_at=self._now())
             entry["attempts"] += 1
+            if force:
+                entry["force_refresh_pending"] = True
             batches[batch_id] = entry
         return batch_id, entry
 
@@ -90,6 +92,7 @@ class BatchManifest:
                 completed_at=self._now(),
                 updated_at=self._now(),
                 error=None,
+                force_refresh_pending=False,
             )
             batches[batch_id] = entry
         return entry

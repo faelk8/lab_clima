@@ -74,21 +74,30 @@ class CachedWeatherClient:
                 cache_path.unlink(missing_ok=True)
         last_error: Exception | None = None
         for attempt in range(self.max_attempts):
+            remaining_bytes = self.max_total_bytes - self.bytes_downloaded
+            if remaining_bytes <= 0:
+                raise ResponseBudgetExceeded(
+                    f"execução excede {self.max_total_bytes} bytes recebidos"
+                )
             if self.requests_made >= self.max_requests:
                 raise RequestBudgetExceeded(f"limite de {self.max_requests} requests atingido")
             self.requests_made += 1
+            response_limit = min(self.max_response_bytes, remaining_bytes)
             try:
-                body, metadata = self.client.fetch(**params)
+                body, metadata = self.client.fetch(**params, max_response_bytes=response_limit)
+                self.bytes_downloaded += len(body)
                 if len(body) > self.max_response_bytes:
                     raise ResponseBudgetExceeded(f"resposta excede {self.max_response_bytes} bytes")
-                if self.bytes_downloaded + len(body) > self.max_total_bytes:
+                if self.bytes_downloaded > self.max_total_bytes:
                     raise ResponseBudgetExceeded(
                         f"execução excede {self.max_total_bytes} bytes recebidos"
                     )
-                self.bytes_downloaded += len(body)
                 self._write_cache(cache_path, body, metadata)
                 return body, {**metadata, "cache": "miss"}
             except (WeatherSourceError, urllib.error.URLError, TimeoutError) as exc:
+                error_body = getattr(exc, "body", None)
+                if error_body is not None:
+                    self.bytes_downloaded += len(error_body)
                 last_error = exc
                 status = getattr(exc, "status_code", None)
                 if status is not None and status != 429 and status < 500:
