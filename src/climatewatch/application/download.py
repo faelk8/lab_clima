@@ -53,14 +53,21 @@ def download_weather(
     )
     with batch_manifest.claim(params, force=force_refresh) as (batch_id, entry):
         if entry["status"] == "succeeded":
-            return {
-                "batch_id": batch_id,
-                "status": "succeeded",
-                "raw_path": entry["raw_path"],
-                "sha256": entry["sha256"],
-                "byte_count": entry.get("byte_count", Path(entry["raw_path"]).stat().st_size),
-                "batch_replay": "hit",
-            }
+            raw_path = Path(entry["raw_path"])
+            if raw_path.is_file():
+                byte_count = entry.get("byte_count")
+                if byte_count is None:
+                    byte_count = raw_path.stat().st_size
+                return {
+                    "batch_id": batch_id,
+                    "status": "succeeded",
+                    "raw_path": str(raw_path),
+                    "sha256": entry["sha256"],
+                    "byte_count": byte_count,
+                    "batch_replay": "hit",
+                }
+            # Raw ausente invalida o replay concluído; force também ignora cache antigo.
+            _, entry = batch_manifest.begin(params, force=True, _claimed=True)
         try:
             try:
                 body, response = http.fetch(
