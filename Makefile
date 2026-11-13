@@ -1,4 +1,4 @@
-.PHONY: setup lint type test
+.PHONY: setup lint type test sdp-dry-run sdp-run
 setup:
 	poetry install
 lint:
@@ -7,3 +7,7 @@ type:
 	poetry run mypy src
 test:
 	poetry run pytest
+sdp-dry-run:
+	docker compose run --build --rm climatewatch spark-pipelines dry-run --spec /app/spark-pipeline.yml
+sdp-run:
+	docker compose run --build --rm climatewatch spark-pipelines run --spec /app/spark-pipeline.yml
