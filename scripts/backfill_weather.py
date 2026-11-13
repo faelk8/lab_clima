@@ -2,10 +2,10 @@
 
 import argparse
 import json
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
+from climatewatch.application.coverage import hourly_coverage
 from climatewatch.application.download import download_weather
 from climatewatch.application.windows import plan_windows
 from climatewatch.domain.weather import Location
@@ -22,16 +22,6 @@ def load_locations(path: Path) -> dict[str, Location]:
         )
         for item in catalog["locations"]
     }
-
-
-def expected_hours(start: date, end: date, timezone_name: str) -> int:
-    """Conta horas de relógio decorridas entre meias-noites locais inclusivas."""
-    zone = ZoneInfo(timezone_name)
-    first = datetime.combine(start, time.min, zone)
-    following = datetime.combine(end + timedelta(days=1), time.min, zone)
-    return int(
-        (following.astimezone(timezone.utc) - first.astimezone(timezone.utc)).total_seconds() / 3600
-    )
 
 
 def main() -> int:
@@ -59,9 +49,8 @@ def main() -> int:
     rows = []
     for location_id in ids:
         location = locations[location_id]
-        expected = expected_hours(start, end, location.timezone_name)
         requests_before = policy.requests_made
-        received = 0
+        timestamps: list[str] = []
         bytes_saved = 0
         for window in windows:
             result = download_weather(
@@ -73,16 +62,15 @@ def main() -> int:
                 policy,
             )
             payload = json.loads(Path(result["raw_path"]).read_text(encoding="utf-8"))
-            received += len(payload["hourly"]["time"])
+            timestamps.extend(payload["hourly"]["time"])
             bytes_saved += result["byte_count"]
+        coverage = hourly_coverage(start, end, location.timezone_name, timestamps)
         rows.append(
             {
                 "location_id": location_id,
                 "start": start.isoformat(),
                 "end": end.isoformat(),
-                "expected_hours": expected,
-                "received_hours": received,
-                "missing_hours": max(0, expected - received),
+                **coverage,
                 "byte_count": bytes_saved,
                 "windows": len(windows),
                 "api_requests_including_retries": policy.requests_made - requests_before,

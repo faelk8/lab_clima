@@ -5,6 +5,8 @@ import hashlib
 import json
 import os
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, cast
@@ -24,13 +26,21 @@ class BatchManifest:
         payload = json.dumps(params, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(payload.encode()).hexdigest()
 
-    def begin(self, params: dict[str, Any], *, force: bool = False) -> tuple[str, dict[str, Any]]:
+    def begin(
+        self,
+        params: dict[str, Any],
+        *,
+        force: bool = False,
+        _claimed: bool = False,
+    ) -> tuple[str, dict[str, Any]]:
         """Marca lote como running; lote já concluído é devolvido sem alteração."""
         batch_id = self.batch_id(params)
         with self._locked() as batches:
             existing = batches.get(batch_id)
             if existing and existing["status"] == "succeeded" and not force:
                 return batch_id, existing
+            if existing and existing["status"] == "running" and not _claimed:
+                raise RuntimeError(f"lote {batch_id} já possui execução ativa")
             entry = existing or {
                 "batch_id": batch_id,
                 "params": params,
@@ -41,6 +51,22 @@ class BatchManifest:
             entry["attempts"] += 1
             batches[batch_id] = entry
         return batch_id, entry
+
+    @contextmanager
+    def claim(
+        self, params: dict[str, Any], *, force: bool = False
+    ) -> Iterator[tuple[str, dict[str, Any]]]:
+        """Serializa toda a execução do lote e recupera estado deixado por processo morto."""
+        batch_id = self.batch_id(params)
+        claim_path = self.path.with_name(f"{self.path.name}.{batch_id}.claim")
+        claim_path.parent.mkdir(parents=True, exist_ok=True)
+        with claim_path.open("a+") as stream:
+            fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+            try:
+                claimed_id, entry = self.begin(params, force=force, _claimed=True)
+                yield claimed_id, entry
+            finally:
+                fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
 
     def succeed(self, batch_id: str, manifest: dict[str, Any]) -> dict[str, Any]:
         """Marca lote como concluído somente depois da persistência raw."""

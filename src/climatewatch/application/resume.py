@@ -17,8 +17,22 @@ def resume_incomplete(
     results = []
     for entry in manifest.entries({"failed", "running"}):
         params = entry["params"]
-        location = locations[params["location_id"]]
+        catalog_location = locations.get(params["location_id"])
+        location = Location(
+            location_id=params["location_id"],
+            name=catalog_location.name if catalog_location else params["location_id"],
+            latitude=params["latitude"],
+            longitude=params["longitude"],
+            timezone_name=params["timezone_name"],
+        )
         results.append(
-            download(location, params["start"], params["end"], params["variables"], output)
+            download(
+                location,
+                params["start"],
+                params["end"],
+                params["variables"],
+                output,
+                manifest=manifest,
+            )
         )
     return results
