@@ -21,6 +21,8 @@ def test_threshold_boundaries(rain: float | None, expected: ThresholdState) -> N
 
 def test_insufficient_coverage_is_inconclusive() -> None:
     assert evaluate_precipitation_threshold(100.0, 17).state == ThresholdState.INCONCLUSIVE
+    assert evaluate_precipitation_threshold(100.0, 23).state == ThresholdState.INCONCLUSIVE
+    assert evaluate_precipitation_threshold(100.0, 24).state == ThresholdState.ABOVE
 
 
 def test_invalid_configuration_is_rejected() -> None:

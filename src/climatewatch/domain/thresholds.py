@@ -23,7 +23,7 @@ def evaluate_precipitation_threshold(
     precipitation_mm: float | None,
     coverage_hours: int,
     threshold_mm: float = 50.0,
-    required_hours: int = 18,
+    required_hours: int = 24,
 ) -> ThresholdResult:
     """Classifica valor demonstrativo; cobertura baixa ou valor ausente é inconclusivo."""
     if threshold_mm < 0:

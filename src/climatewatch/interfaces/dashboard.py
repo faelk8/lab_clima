@@ -160,9 +160,14 @@ def create_handler(
                 result = evaluate_precipitation_threshold(
                     latest.get("precipitation_24h_mm"),
                     latest.get("precipitation_hours_24h", 0),
+                    required_hours=24 if latest.get("complete_24h_window") else 25,
                 )
-                state = f"{result.state.value}: {result.precipitation_mm} mm " \
-                    f"({result.coverage_hours}/24 horas)"
+                value_text = (
+                    "valor ausente"
+                    if result.precipitation_mm is None
+                    else f"{result.precipitation_mm} mm"
+                )
+                state = f"{result.state.value}: {value_text} ({result.coverage_hours}/24 horas)"
             else:
                 state = None
             content = render_dashboard(rows, locations, location, start, end, state).encode("utf-8")
