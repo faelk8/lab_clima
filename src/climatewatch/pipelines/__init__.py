@@ -1,15 +1,5 @@
-"""Declarative pipeline entry points for ClimateWatch.
+"""Pacote das definições declarativas de pipeline ClimateWatch.
 
-The configured SDP graph is deliberately local: pipeline definitions must not
-perform HTTP requests. External collection remains in the downloader layer.
+As definições ficam em módulos próprios descobertos pelo glob da configuração
+SDP. Este inicializador não declara datasets nem executa efeitos colaterais.
 """
-
-from pyspark import pipelines as dp
-from pyspark.sql import DataFrame, SparkSession
-
-
-@dp.materialized_view
-def smoke_values() -> DataFrame:
-    """Fixed values used to validate the pinned SDP runtime without HTTP."""
-    spark = SparkSession.builder.getOrCreate()
-    return spark.createDataFrame([(1, "ok")], ["id", "status"])
