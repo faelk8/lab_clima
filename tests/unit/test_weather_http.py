@@ -104,6 +104,30 @@ def test_invalid_json_is_translated() -> None:
             )
 
 
+def test_invalid_utf8_preserves_response_body() -> None:
+    """Falha de decoding UTF-8 mantém os bytes recebidos no erro de origem."""
+    import pytest
+
+    from climatewatch.infrastructure.weather_http import WeatherSourceError
+
+    class InvalidUtf8Response(Response):
+        def read(self, size: int = -1) -> bytes:
+            body = b"\xff"
+            return body if size < 0 else body[:size]
+
+    with patch("urllib.request.urlopen", return_value=InvalidUtf8Response()):
+        with pytest.raises(WeatherSourceError, match="resposta JSON inválida") as caught:
+            WeatherHttpClient().fetch(
+                latitude=1,
+                longitude=2,
+                start="2024-01-01",
+                end="2024-01-01",
+                variables=["precipitation"],
+                timezone_name="UTC",
+            )
+    assert caught.value.body == b"\xff"
+
+
 def test_http_date_retry_after_is_parsed() -> None:
     """Lê Retry-After em formato de data HTTP."""
     from datetime import datetime, timedelta, timezone
