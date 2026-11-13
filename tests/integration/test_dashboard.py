@@ -34,6 +34,7 @@ def test_dashboard_displays_gold_sample_and_units() -> None:
 def test_dashboard_http_smoke_and_empty_period_message() -> None:
     query = Mock()
     query.daily.return_value = []
+    query.indicators.return_value = []
     server = ThreadingHTTPServer(
         ("127.0.0.1", 0),
         create_handler(query, [{"location_id": "sp", "name": "São Paulo"}]),
