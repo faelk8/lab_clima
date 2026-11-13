@@ -12,6 +12,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from climatewatch.application.query_gold import QueryGold
+from climatewatch.domain.thresholds import evaluate_precipitation_threshold
 from climatewatch.infrastructure.gold_reader import GoldReader
 
 LOCATIONS_PATH = Path("config/locations.json")
@@ -23,6 +24,7 @@ def render_dashboard(
     selected_location: str,
     start: date,
     end: date,
+    threshold_state: str | None = None,
 ) -> str:
     """Renderiza controles, métricas e gráfico SVG com conteúdo escapado."""
     options = "".join(
@@ -83,6 +85,9 @@ th,td{{padding:.6rem;border-bottom:1px solid #ccd8e2;text-align:left}}</style>
 <label>De<input type="date" name="start" value="{start.isoformat()}" required></label>
 <label>Até<input type="date" name="end" value="{end.isoformat()}" required></label>
 <button type="submit">Consultar Gold</button></form><section>{visualization}</section>
+<section><h2>Limiar de demonstração</h2>
+<p>{html.escape(threshold_state or 'Sem janela de 24h disponível.')}
+— limiar configurável demonstrativo de 50 mm, não oficial.</p></section>
 <section><h2>Localidades verificadas</h2>
 <p>Mapa esquemático local, usado como alternativa offline sem mapa externo.</p>
 <p>Legenda: <span style="color:#d1495b">● vermelho: local selecionado</span>;
@@ -146,10 +151,26 @@ def create_handler(
                 start = date.fromisoformat(params.get("start", ["2024-01-01"])[0])
                 end = date.fromisoformat(params.get("end", ["2024-01-31"])[0])
                 rows = query.daily(location, start, end)
+                indicators = query.indicators(location, start, end)
             except ValueError as exc:
                 self.send_error(400, str(exc))
                 return
-            content = render_dashboard(rows, locations, location, start, end).encode("utf-8")
+            if indicators:
+                latest = max(indicators, key=lambda row: row["observed_at_utc"])
+                result = evaluate_precipitation_threshold(
+                    latest.get("precipitation_24h_mm"),
+                    latest.get("precipitation_hours_24h", 0),
+                    complete_window=bool(latest.get("complete_24h_window")),
+                )
+                value_text = (
+                    "valor ausente"
+                    if result.precipitation_mm is None
+                    else f"{result.precipitation_mm} mm"
+                )
+                state = f"{result.state.value}: {value_text} ({result.coverage_hours}/24 horas)"
+            else:
+                state = None
+            content = render_dashboard(rows, locations, location, start, end, state).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(content)))
