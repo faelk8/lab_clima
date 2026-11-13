@@ -64,6 +64,35 @@ def test_repeated_batch_skips_http_and_returns_existing_raw(tmp_path: Path) -> N
     assert client.calls == 1
 
 
+def test_missing_raw_for_succeeded_batch_is_refetched(tmp_path: Path) -> None:
+    """Raw ausente invalida o replay e é recuperado sem duplicar versão."""
+
+    class CountingClient(Client):
+        calls = 0
+
+        def fetch(self, **kwargs):
+            self.calls += 1
+            return super().fetch(**kwargs)
+
+    client = CountingClient()
+    location = Location("x", "X", 0, 0, "UTC")
+    args = (location, "2024-01-01", "2024-01-01", ["precipitation"], tmp_path / "raw")
+    first = download_weather(*args, client)
+    Path(first["raw_path"]).unlink()
+
+    recovered = download_weather(*args, client)
+
+    assert recovered["status"] == "succeeded"
+    assert recovered.get("batch_replay") != "hit"
+    assert Path(recovered["raw_path"]).is_file()
+    assert recovered["sha256"] == first["sha256"]
+    assert client.calls == 2
+    entry = json.loads((tmp_path / "state" / "batches.json").read_text())
+    state = next(iter(entry.values()))
+    assert state["status"] == "succeeded"
+    assert len(state["versions"]) == 1
+
+
 def test_force_refresh_preserves_new_content_version(tmp_path: Path) -> None:
     """Atualização explícita ignora cache e mantém ambos os hashes no manifesto."""
 
