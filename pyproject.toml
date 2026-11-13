@@ -16,6 +16,7 @@ mypy = "^1.13"
 
 [tool.poetry.scripts]
 climatewatch-download = "climatewatch.interfaces.cli:main"
+climatewatch-dashboard = "climatewatch.interfaces.dashboard:main"
 
 [build-system]
 requires = ["poetry-core>=2.0"]

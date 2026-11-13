@@ -4,7 +4,7 @@ Projeto experimental local para coletar dados históricos abertos, preservar pro
 
 ## Estado
 
-Fases 1, 2 e 3 implementadas e testadas localmente. A Fase 3 acrescenta o DAG Bronze → Silver → Gold. Consulte [arquitetura](docs/architecture.md), [contratos de dados](docs/data-contracts.md) e [fontes e licenças](docs/sources-and-licenses.md).
+Fases 1, 2 e 3 implementadas e testadas localmente. A Fase 4 está adicionando a interface visual para explorar dados Gold. Consulte [arquitetura](docs/architecture.md), [contratos de dados](docs/data-contracts.md) e [fontes e licenças](docs/sources-and-licenses.md).
 
 ## Requisitos e comandos
 
@@ -31,6 +31,16 @@ CLIMATEWATCH_F3_REPLAY=1 poetry run pytest -q tests/integration/test_pipeline_re
 ```
 
 O catálogo persistente fica em `data/warehouse/f3`. Consulte [arquitetura](docs/architecture.md) para o DAG, schemas, cobertura e consultas de inspeção. Os testes opt-in precisam de Docker.
+
+## Painel local
+
+Após materializar as tabelas Gold, inicie o painel:
+
+```bash
+poetry run climatewatch-dashboard
+```
+
+Abra `http://127.0.0.1:8765`. O painel consulta somente as tabelas Gold locais; para popular os dados, execute o pipeline SDP separadamente. Para escolher host/porta: `poetry run climatewatch-dashboard --host 127.0.0.1 --port 8765`.
 
 ## Backfill e retomada
 
