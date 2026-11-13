@@ -26,6 +26,9 @@ def test_dashboard_displays_gold_sample_and_units() -> None:
     assert "20.0 °C" in html
     assert "24/24" in html
     assert "<svg" in html
+    assert "marcador vermelho" in html
+    assert "alternativa offline" in html
+    assert "Open-Meteo Geocoding API" in html
 
 
 def test_dashboard_http_smoke_and_empty_period_message() -> None:

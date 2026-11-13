@@ -83,10 +83,13 @@ th,td{{padding:.6rem;border-bottom:1px solid #ccd8e2;text-align:left}}</style>
 <label>De<input type="date" name="start" value="{start.isoformat()}" required></label>
 <label>Até<input type="date" name="end" value="{end.isoformat()}" required></label>
 <button type="submit">Consultar Gold</button></form><section>{visualization}</section>
-<section><h2>Localidades verificadas</h2>{map_markup}
+<section><h2>Localidades verificadas</h2>
+<p>Mapa esquemático local, usado como alternativa offline sem mapa externo.</p>
+<p>Legenda: marcador vermelho indica o local selecionado; azul indica os demais locais.</p>
+{map_markup}
 <p>Coordenadas do catálogo local; dados históricos modelados, sem valor de alerta ou risco oficial.
-</p><p>Fonte: Open-Meteo Historical Weather API. Agregação diária civil por fuso local;
-cobertura horária indicada na tabela.</p></section>
+</p><p>Coordenadas e nomes: Open-Meteo Geocoding API. Clima: Open-Meteo Historical Weather API.
+Agregação diária civil por fuso local; cobertura horária indicada na tabela.</p></section>
 <table><thead><tr><th>Data local</th><th>Chuva</th><th>Temperatura média</th>
 <th>Cobertura</th></tr></thead>
 <tbody>{table_rows}</tbody></table></html>"""
