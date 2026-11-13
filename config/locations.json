@@ -1,0 +1,11 @@
+{
+  "catalog_version": 1,
+  "source": "Open-Meteo Geocoding API",
+  "verified_at": "2026-11-13",
+  "source_url": "https://geocoding-api.open-meteo.com/v1/search",
+  "locations": [
+    {"location_id":"br-sp-sao-paulo","name":"São Paulo","state":"São Paulo","country_code":"BR","latitude":-23.5475,"longitude":-46.63611,"timezone":"America/Sao_Paulo","geocoding_id":3448439},
+    {"location_id":"br-pe-recife","name":"Recife","state":"Pernambuco","country_code":"BR","latitude":-8.05389,"longitude":-34.88111,"timezone":"America/Recife","geocoding_id":3390760},
+    {"location_id":"br-am-manaus","name":"Manaus","state":"Amazonas","country_code":"BR","latitude":-3.10194,"longitude":-60.025,"timezone":"America/Manaus","geocoding_id":3663517}
+  ]
+}

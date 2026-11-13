@@ -1,0 +1,32 @@
+{
+  "latitude": -23.5475,
+  "longitude": -46.63611,
+  "timezone": "America/Sao_Paulo",
+  "hourly": {
+    "time": [
+      "2024-01-01T22:00",
+      "2024-01-01T23:00",
+      "2024-01-02T00:00"
+    ],
+    "temperature_2m": [
+      27.0,
+      26.5,
+      26.0
+    ],
+    "precipitation": [
+      0.0,
+      1.2,
+      0.0
+    ],
+    "relative_humidity_2m": [
+      70.0,
+      70.0,
+      70.0
+    ],
+    "wind_speed_10m": [
+      5.0,
+      5.0,
+      5.0
+    ]
+  }
+}

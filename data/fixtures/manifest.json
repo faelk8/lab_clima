@@ -1,0 +1,10 @@
+{
+  "classification": "synthetic",
+  "contract_version": 1,
+  "sha256": {
+    "hourly_boundary.json": "325e67e76612cc9ad2c2bf3cc37dafa5fe9c3785bb23d0f3eb9ae326e00ab095",
+    "hourly_nulls.json": "35fdf85da782be601448d605b8cb384855f049b6315b65dff55773e63dbec16a",
+    "hourly_regular.json": "3a9b6fa9fc0b5e4773539b3b8aeca1fcd8d36a754667c2dd1cb9fca4175a821b"
+  },
+  "expected_regular_hour_count": 3
+}
