@@ -230,3 +230,5 @@ spark-warehouse/
 data/raw/
 data/warehouse/
 data/state/
+data/cache/
+data/quarantine/

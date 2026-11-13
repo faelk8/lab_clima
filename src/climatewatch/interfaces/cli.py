@@ -29,6 +29,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--variables", default="temperature_2m,precipitation")
     parser.add_argument("--locations", type=Path, default=Path("config/locations.json"))
     parser.add_argument("--output", type=Path, default=Path("data/raw"))
+    parser.add_argument(
+        "--force-refresh", action="store_true", help="ignora o estado concluído do lote"
+    )
     args = parser.parse_args(argv)
     locations = load_locations(args.locations)
     if args.location_id not in locations:
@@ -40,6 +43,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.end,
             [value.strip() for value in args.variables.split(",")],
             args.output,
+            force_refresh=args.force_refresh,
         )
     except ValueError as exc:
         parser.error(str(exc))

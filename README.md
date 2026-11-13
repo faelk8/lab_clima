@@ -4,7 +4,7 @@ Projeto experimental local para coletar dados históricos abertos, preservar pro
 
 ## Estado
 
-Fase 1 implementada e testada localmente. A Fase 2 ainda não foi iniciada. Consulte [contratos de dados](docs/data-contracts.md), [fontes e licenças](docs/sources-and-licenses.md) e [evidências da Fase 1](docs/evidence/F1-09.md).
+Fases 1 e 2 implementadas e testadas localmente. A Fase 3 ainda não foi iniciada. Consulte [contratos de dados](docs/data-contracts.md), [fontes e licenças](docs/sources-and-licenses.md) e [evidências da Fase 1](docs/evidence/F1-09.md).
 
 ## Requisitos e comandos
 
@@ -19,7 +19,16 @@ poetry run climatewatch-download --help
 docker compose run --rm climatewatch python -m climatewatch.interfaces.cli --help
 ```
 
-A imagem usa PySpark 4.1.0 com o extra oficial `pipelines`. A configuração do smoke está em `spark-pipeline.yml`. O runtime executou `dry-run`, `run` e uma leitura do Parquet sintético nesta fase.
+A imagem usa PySpark 4.1.0 com o extra oficial `pipelines`. A configuração do smoke está em `spark-pipeline.yml`. O runtime executou `dry-run`, `run` e uma leitura do Parquet sintético.
+
+## Backfill e retomada
+
+```bash
+poetry run python scripts/backfill_weather.py --start 2026-10-01 --end 2026-10-30
+poetry run python scripts/resume_batches.py
+```
+
+O pipeline limita as janelas e requests, mantém cache/manifests/raw em diretórios locais ignorados pelo Git e registra cobertura no relatório configurado. Consulte `docs/runbook.md` para falhas e recuperação.
 
 ## Coleta real
 
