@@ -60,6 +60,7 @@ def render_dashboard(
             + "".join(bars)
             + '<text x="10" y="18">Precipitação (mm)</text></svg>'
         )
+    map_markup = _render_location_map(locations, selected_location)
     table_rows = "".join(
         "<tr>"
         f"<td>{html.escape(str(row.get('local_date', '')))}</td>"
@@ -82,6 +83,10 @@ th,td{{padding:.6rem;border-bottom:1px solid #ccd8e2;text-align:left}}</style>
 <label>De<input type="date" name="start" value="{start.isoformat()}" required></label>
 <label>Até<input type="date" name="end" value="{end.isoformat()}" required></label>
 <button type="submit">Consultar Gold</button></form><section>{visualization}</section>
+<section><h2>Localidades verificadas</h2>{map_markup}
+<p>Coordenadas do catálogo local; dados históricos modelados, sem valor de alerta ou risco oficial.
+</p><p>Fonte: Open-Meteo Historical Weather API. Agregação diária civil por fuso local;
+cobertura horária indicada na tabela.</p></section>
 <table><thead><tr><th>Data local</th><th>Chuva</th><th>Temperatura média</th>
 <th>Cobertura</th></tr></thead>
 <tbody>{table_rows}</tbody></table></html>"""
@@ -89,6 +94,32 @@ th,td{{padding:.6rem;border-bottom:1px solid #ccd8e2;text-align:left}}</style>
 
 def _format(value: Any, unit: str) -> str:
     return "—" if value is None else f"{float(value):.1f} {unit}"
+
+
+def _render_location_map(locations: list[dict[str, Any]], selected: str) -> str:
+    """Renderiza pontos relativos às coordenadas do catálogo, sem mapa remoto."""
+    if not locations or any(
+        "latitude" not in item or "longitude" not in item for item in locations
+    ):
+        return "<p role=\"status\">Mapa indisponível: coordenadas locais ausentes.</p>"
+    latitudes = [float(item["latitude"]) for item in locations]
+    longitudes = [float(item["longitude"]) for item in locations]
+    min_lat, max_lat = min(latitudes), max(latitudes)
+    min_lon, max_lon = min(longitudes), max(longitudes)
+    lat_span, lon_span = max(max_lat - min_lat, 0.1), max(max_lon - min_lon, 0.1)
+    points = []
+    for item in locations:
+        x = 40 + (float(item["longitude"]) - min_lon) / lon_span * 320
+        y = 30 + (max_lat - float(item["latitude"])) / lat_span * 180
+        color = "#d1495b" if item["location_id"] == selected else "#2878b5"
+        label = html.escape(item["name"])
+        points.append(
+            f'<circle cx="{x:.1f}" cy="{y:.1f}" r="8" fill="{color}">'
+            f"<title>{label}</title></circle>"
+            f"<text x=\"{x + 12:.1f}\" y=\"{y + 4:.1f}\">{label}</text>"
+        )
+    return ('<svg role="img" aria-label="Mapa esquemático de localidades verificadas" '
+            'viewBox="0 0 700 250">' + "".join(points) + "</svg>")
 
 
 def create_handler(
@@ -131,7 +162,8 @@ def main() -> None:
     args = parser.parse_args()
     locations_data = json.loads(LOCATIONS_PATH.read_text(encoding="utf-8"))
     locations = [
-        {"location_id": item["location_id"], "name": item["name"]}
+        {"location_id": item["location_id"], "name": item["name"],
+         "latitude": item["latitude"], "longitude": item["longitude"]}
         for item in locations_data["locations"]
     ]
     from pyspark.sql import SparkSession
