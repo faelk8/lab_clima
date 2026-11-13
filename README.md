@@ -4,7 +4,7 @@ Projeto experimental local para coletar dados históricos abertos, preservar pro
 
 ## Estado
 
-Fases 1 e 2 implementadas e testadas localmente. A Fase 3 ainda não foi iniciada. Consulte [contratos de dados](docs/data-contracts.md), [fontes e licenças](docs/sources-and-licenses.md) e [evidências da Fase 1](docs/evidence/F1-09.md).
+Fases 1 e 2 implementadas e testadas localmente. A Fase 3 acrescenta o DAG Bronze → Silver → Gold e está em validação local. Consulte [arquitetura](docs/architecture.md), [contratos de dados](docs/data-contracts.md) e [fontes e licenças](docs/sources-and-licenses.md).
 
 ## Requisitos e comandos
 
@@ -20,6 +20,17 @@ docker compose run --rm climatewatch python -m climatewatch.interfaces.cli --hel
 ```
 
 A imagem usa PySpark 4.1.0 com o extra oficial `pipelines`. A configuração do smoke está em `spark-pipeline.yml`. O runtime executou `dry-run`, `run` e uma leitura do Parquet sintético.
+
+## Pipeline declarativo
+
+```bash
+docker compose run --build --rm climatewatch spark-pipelines dry-run --spec /app/spark-pipeline.yml
+docker compose run --build --rm climatewatch spark-pipelines run --spec /app/spark-pipeline.yml
+CLIMATEWATCH_SILVER_FIXTURES=1 poetry run pytest -q tests/integration/test_silver_sql_fixtures.py
+CLIMATEWATCH_F3_REPLAY=1 poetry run pytest -q tests/integration/test_pipeline_replay.py
+```
+
+O catálogo persistente fica em `data/warehouse/f3`. Consulte [arquitetura](docs/architecture.md) para o DAG, schemas, cobertura e consultas de inspeção. Os testes opt-in precisam de Docker.
 
 ## Backfill e retomada
 

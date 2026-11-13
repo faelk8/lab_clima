@@ -42,3 +42,12 @@ Uma execução de retomada compartilha um orçamento de no máximo 30 requests e
 - Raw removido de lote concluído: a próxima execução detecta a ausência, reabre o lote e consulta a origem ignorando o cache. O payload recuperado é gravado antes de voltar a `succeeded`; hash já registrado não cria uma versão duplicada.
 
 O processo garante idempotência de arquivos com conteúdo igual, não exactly-once transacional entre API, cache, raw e manifesto.
+
+## Reprocessar Bronze, Silver e Gold
+
+```bash
+docker compose run --build --rm climatewatch spark-pipelines dry-run --spec /app/spark-pipeline.yml
+docker compose run --build --rm climatewatch spark-pipelines run --spec /app/spark-pipeline.yml
+```
+
+O catálogo Hive e os dados do SDP persistem em `data/warehouse/f3` e `data/warehouse/sdp`. Preserve esses diretórios durante recuperação. O `run` relê os objetos raw com sidecar, aplica rejeições em `silver_rejected`, resolve revisões por instante de ingestão e recalcula Gold. Examine flags de qualidade antes de tentar corrigir a origem. Uma falha de schema ou de execução não deve levar à remoção dos objetos raw; corrija o dado ou transformação, valide com `dry-run` e repita `run`. O teste opt-in `CLIMATEWATCH_F3_REPLAY=1 poetry run pytest -q tests/integration/test_pipeline_replay.py` verifica replay e correção histórica.
