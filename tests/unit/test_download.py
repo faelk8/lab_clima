@@ -7,6 +7,7 @@ import pytest
 
 from climatewatch.application.download import download_weather
 from climatewatch.domain.weather import Location
+from climatewatch.infrastructure.http_policy import CachedWeatherClient
 
 
 class Client:
@@ -14,10 +15,10 @@ class Client:
 
     def fetch(self, **kwargs):
         """Devolve payload e metadados determinísticos."""
-        return b'{"hourly":{"time":["2024-01-01T00:00"],"precipitation":[0.0]}}', {
-            "status": 200,
-            "url": "fixture://weather",
-        }
+        body = (
+            '{"hourly":{"time":["' + kwargs["start"] + 'T00:00"],"precipitation":[0.0]}}'
+        ).encode()
+        return body, {"status": 200, "url": "fixture://weather"}
 
 
 def test_download_offline_persists_raw(tmp_path: Path) -> None:
@@ -88,3 +89,33 @@ def test_force_refresh_preserves_new_content_version(tmp_path: Path) -> None:
     state = json.loads((tmp_path / "state" / "batches.json").read_text())
     versions = next(iter(state.values()))["versions"]
     assert [entry["sha256"] for entry in versions] == [first["sha256"], second["sha256"]]
+
+
+def test_force_refresh_bypasses_injected_policy_cache(tmp_path: Path) -> None:
+    """Refresh ignora o cache da política compartilhada pelo backfill."""
+
+    class RevisionClient:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def fetch(self, **kwargs):
+            self.calls += 1
+            body = json.dumps(
+                {
+                    "hourly": {
+                        "time": ["2024-01-01T00:00"],
+                        "precipitation": [float(self.calls)],
+                    }
+                }
+            ).encode()
+            return body, {"status": 200}
+
+    transport = RevisionClient()
+    policy = CachedWeatherClient(transport, tmp_path / "cache", sleeper=lambda _: None)
+    location = Location("x", "X", 0, 0, "UTC")
+    args = (location, "2024-01-01", "2024-01-01", ["precipitation"], tmp_path / "raw")
+    first = download_weather(*args, policy)
+    second = download_weather(*args, policy, force_refresh=True)
+    assert first["sha256"] != second["sha256"]
+    assert transport.calls == 2
+    assert policy.requests_made == 2
