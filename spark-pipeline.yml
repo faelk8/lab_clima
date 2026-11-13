@@ -1,7 +1,21 @@
-name: climatewatch_smoke
+name: climatewatch
+catalog: spark_catalog
+database: climatewatch_f3
 libraries:
   - glob:
-      include: pipelines/smoke/**
-storage: file:///tmp/climatewatch-sdp-storage
+      include: src/climatewatch/pipelines/bronze.py
+  - glob:
+      include: src/climatewatch/pipelines/silver_01_expanded.sql
+  - glob:
+      include: src/climatewatch/pipelines/silver_02_quality.sql
+  - glob:
+      include: src/climatewatch/pipelines/silver_03_observations.sql
+  - glob:
+      include: src/climatewatch/pipelines/silver_04_rejected.sql
+  - glob:
+      include: src/climatewatch/pipelines/gold_01_daily.sql
+  - glob:
+      include: src/climatewatch/pipelines/gold_02_indicators.sql
+storage: file:///app/data/warehouse/sdp
 configuration:
   spark.sql.shuffle.partitions: "1"

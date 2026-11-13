@@ -8,4 +8,6 @@ services:
       - ./spark-pipeline.yml:/app/spark-pipeline.yml:ro
     environment:
       SPARK_LOCAL_IP: 127.0.0.1
+      SPARK_CONF_DIR: /app/config/spark
+      PYSPARK_SUBMIT_ARGS: "--conf spark.sql.catalogImplementation=hive --conf spark.sql.warehouse.dir=file:///app/data/warehouse/f3/warehouse pyspark-shell"
     command: ["python", "-m", "climatewatch.interfaces.cli", "--help"]

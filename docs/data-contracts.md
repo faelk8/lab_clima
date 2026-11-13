@@ -9,3 +9,5 @@ O parser inicial exige arrays temporais com mesmo comprimento e converte horas l
 Invariantes: ID de local não vazio; hora com fuso; precipitação não negativa; umidade no intervalo 0–100; versão suportada. Campo solicitado ausente ou arrays divergentes causam erro explícito, sem truncamento silencioso; variáveis não solicitadas ficam como `None`. O chamador do parser informa explicitamente o subconjunto solicitado.
 
 A precipitação horária é acumulada durante o intervalo da hora, não um valor instantâneo. Dia civil é definido pelo fuso da localidade. Não somar origens/modelos. Futuras correções preservam a versão raw e exigem replay. Contrato atual: `src/climatewatch/domain/weather.py`.
+
+No SDP da Fase 3, `silver_observations` aplica o contrato horário e escolhe a revisão mais recente por `(location_id, observed_at_utc, source, model)`; `silver_rejected` preserva as flags das linhas inválidas. `gold_daily` agrega por local, fonte, modelo, fuso e data local. `gold_indicators` representa janelas temporais de 24 horas, com contagens de cobertura. Consulte [arquitetura](architecture.md) para schemas e consultas.

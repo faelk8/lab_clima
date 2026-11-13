@@ -1,0 +1,17 @@
+name: climatewatch-silver-fixtures
+catalog: spark_catalog
+database: climatewatch_silver_fixture_test
+libraries:
+  - glob:
+      include: ../../src/climatewatch/pipelines/bronze.py
+  - glob:
+      include: ../../src/climatewatch/pipelines/silver_01_expanded.sql
+  - glob:
+      include: ../../src/climatewatch/pipelines/silver_02_quality.sql
+  - glob:
+      include: ../../src/climatewatch/pipelines/silver_03_observations.sql
+  - glob:
+      include: ../../src/climatewatch/pipelines/silver_04_rejected.sql
+storage: file:///app/data/warehouse/f3_silver_fixture_test
+configuration:
+  spark.sql.shuffle.partitions: "1"
