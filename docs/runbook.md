@@ -1,0 +1,40 @@
+# Runbook de ingestão batch
+
+## Coleta de uma janela
+
+```bash
+poetry run climatewatch-download --location-id br-sp-sao-paulo \
+  --start 2026-10-01 --end 2026-10-07 \
+  --variables temperature_2m,precipitation,relative_humidity_2m,wind_speed_10m
+```
+
+A saída bruta fica em `data/raw`; cache, manifesto e quarentena ficam no diretório local `data/` e são ignorados pelo Git. Não apague esses diretórios durante recuperação sem revisar o conteúdo.
+
+## Backfill de três localidades
+
+```bash
+poetry run python scripts/backfill_weather.py \
+  --start 2026-10-01 --end 2026-10-30 --max-days 7 --max-requests 30
+```
+
+Cada janela usa datas inclusivas. Limite default 7 dias, no máximo 30 requests na execução incluindo retries. Para simular sem API, use testes com cliente falso; backfill real é opt-in.
+
+## Retomar falhas/interrupções
+
+```bash
+poetry run python scripts/resume_batches.py
+```
+
+Estados `running` remanescentes de encerramento abrupto e `failed` são reexecutados pelos parâmetros persistidos. Lotes concluídos são ignorados. Antes de nova tentativa, verifique rede, causa no manifesto e espaço em disco. Não remova raw nem cache para tentar resolver erro de contrato.
+
+## Falhas e recuperação
+
+- HTTP 429: esperar `Retry-After`; o código repete até três tentativas e interrompe no orçamento.
+- HTTP 5xx, timeout ou falha de conexão: backoff exponencial limitado; repetir a execução depois de verificar a disponibilidade.
+- HTTP 4xx não recuperável: sem retry; revisar intervalo, parâmetros e variáveis.
+- JSON válido mas contrato inválido: raw permanece no armazenamento, registro vai para `data/quarantine` e manifesto fica `failed` com referência ao raw. Corrigir código/contrato e retomar o mesmo lote.
+- Interrupção de processo: manifesto mostra `running`; o comando de retomada consulta de novo. Escritas JSON usam temporário e rename atômico.
+- Falha de disco: não marcar lote como concluído; libere espaço por procedimento manual, preservando raw existente, depois retome.
+- Dados corrigidos pela fonte: `--force-refresh` no downloader ignora lote concluído; conteúdo com novo hash é acrescentado em `versions`, sem apagar versão anterior.
+
+O processo garante idempotência de arquivos com conteúdo igual, não exactly-once transacional entre API, cache, raw e manifesto.
