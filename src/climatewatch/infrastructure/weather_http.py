@@ -74,7 +74,7 @@ class WeatherHttpClient:
                     raise WeatherSourceError(f"origem retornou HTTP {response.status}")
                 try:
                     payload = json.loads(body)
-                except json.JSONDecodeError as exc:
+                except (json.JSONDecodeError, UnicodeDecodeError) as exc:
                     raise WeatherSourceError(
                         "resposta JSON inválida", response.status, body=body
                     ) from exc
