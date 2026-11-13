@@ -10,6 +10,7 @@ class Response:
     """Resposta HTTP mínima para mock."""
 
     status = 200
+    headers = {}
 
     def __enter__(self):
         return self
@@ -17,8 +18,9 @@ class Response:
     def __exit__(self, *args):
         return None
 
-    def read(self):
-        return json.dumps({"hourly": {"time": []}}).encode()
+    def read(self, size=-1):
+        body = json.dumps({"hourly": {"time": []}}).encode()
+        return body if size < 0 else body[:size]
 
 
 def test_http_builds_query_and_returns_bytes() -> None:
@@ -85,12 +87,13 @@ def test_invalid_json_is_translated() -> None:
     class InvalidResponse(Response):
         """Resposta HTTP com corpo malformado."""
 
-        def read(self) -> bytes:
+        def read(self, size: int = -1) -> bytes:
             """Retorna bytes JSON inválidos para o caso de falha."""
-            return b"{"
+            body = b"{"
+            return body if size < 0 else body[:size]
 
     with patch("urllib.request.urlopen", return_value=InvalidResponse()):
-        with pytest.raises(WeatherSourceError, match="falha consultando"):
+        with pytest.raises(WeatherSourceError, match="resposta JSON inválida"):
             WeatherHttpClient().fetch(
                 latitude=1,
                 longitude=2,
@@ -99,3 +102,35 @@ def test_invalid_json_is_translated() -> None:
                 variables=["precipitation"],
                 timezone_name="UTC",
             )
+
+
+def test_http_date_retry_after_is_parsed() -> None:
+    """Lê Retry-After em formato de data HTTP."""
+    from datetime import datetime, timedelta, timezone
+    from email.utils import format_datetime
+    from urllib.error import HTTPError
+
+    import pytest
+
+    from climatewatch.infrastructure.weather_http import WeatherSourceError
+
+    future = datetime.now(timezone.utc) + timedelta(seconds=6)
+    error = HTTPError(
+        "https://example.invalid",
+        429,
+        "rate limited",
+        {"Retry-After": format_datetime(future, usegmt=True)},
+        None,
+    )
+    with patch("urllib.request.urlopen", side_effect=error):
+        with pytest.raises(WeatherSourceError) as caught:
+            WeatherHttpClient().fetch(
+                latitude=1,
+                longitude=2,
+                start="2024-01-01",
+                end="2024-01-01",
+                variables=["precipitation"],
+                timezone_name="UTC",
+            )
+    assert caught.value.retry_after is not None
+    assert 0 < caught.value.retry_after <= 6
