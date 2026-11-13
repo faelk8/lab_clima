@@ -54,9 +54,12 @@ class WeatherRecord:
 
 
 def parse_hourly_payload(
-    payload: dict[str, Any], location: Location, ingested_at: datetime | None = None
+    payload: dict[str, Any],
+    location: Location,
+    ingested_at: datetime | None = None,
+    requested_variables: set[str] | None = None,
 ) -> list[WeatherRecord]:
-    """Converte a resposta hourly do Open-Meteo e rejeita arrays desalinhados."""
+    """Converte hourly, exigindo colunas pedidas e permitindo colunas omitidas."""
     hourly = payload.get("hourly")
     if not isinstance(hourly, dict) or not isinstance(hourly.get("time"), list):
         raise ContractError("campo hourly.time ausente ou inválido")
@@ -67,10 +70,16 @@ def parse_hourly_payload(
         "relative_humidity_2m": "humidity_pct",
         "wind_speed_10m": "wind_speed_kmh",
     }
+    required = set(columns) if requested_variables is None else requested_variables
+    unknown = required - set(columns)
+    if unknown:
+        raise ContractError(f"variáveis solicitadas não suportadas: {sorted(unknown)}")
     values_by_column: dict[str, list[Any]] = {}
     for key in columns:
         values = hourly.get(key)
         if values is None:
+            if key in required:
+                raise ContractError(f"campo hourly.{key} solicitado está ausente")
             values_by_column[key] = [None] * len(times)
             continue
         if not isinstance(values, list) or len(values) != len(times):

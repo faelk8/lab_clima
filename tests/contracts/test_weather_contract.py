@@ -50,8 +50,19 @@ def test_parser_accepts_requested_variable_subset() -> None:
             "precipitation": [0.5],
         }
     }
-    record = parse_hourly_payload(payload, LOCATION)[0]
+    record = parse_hourly_payload(
+        payload, LOCATION, requested_variables={"temperature_2m", "precipitation"}
+    )[0]
     assert record.temperature_c == 20.0
     assert record.precipitation_mm == 0.5
     assert record.humidity_pct is None
     assert record.wind_speed_kmh is None
+
+
+def test_parser_rejects_missing_requested_variable() -> None:
+    """Rejeita coluna ausente quando ela foi pedida na coleta."""
+    payload = {"hourly": {"time": ["2024-01-01T00:00"], "temperature_2m": [20.0]}}
+    with pytest.raises(ContractError, match="precipitation solicitado está ausente"):
+        parse_hourly_payload(
+            payload, LOCATION, requested_variables={"temperature_2m", "precipitation"}
+        )
