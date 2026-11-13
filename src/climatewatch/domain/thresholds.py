@@ -24,6 +24,7 @@ def evaluate_precipitation_threshold(
     coverage_hours: int,
     threshold_mm: float = 50.0,
     required_hours: int = 24,
+    complete_window: bool = True,
 ) -> ThresholdResult:
     """Classifica valor demonstrativo; cobertura baixa ou valor ausente é inconclusivo."""
     if threshold_mm < 0:
@@ -32,7 +33,7 @@ def evaluate_precipitation_threshold(
         raise ValueError("required_hours deve estar entre 1 e 24")
     if coverage_hours < 0 or coverage_hours > 24:
         raise ValueError("coverage_hours deve estar entre 0 e 24")
-    if precipitation_mm is None or coverage_hours < required_hours:
+    if not complete_window or precipitation_mm is None or coverage_hours < required_hours:
         state = ThresholdState.INCONCLUSIVE
     elif precipitation_mm < threshold_mm:
         state = ThresholdState.BELOW

@@ -23,6 +23,10 @@ def test_insufficient_coverage_is_inconclusive() -> None:
     assert evaluate_precipitation_threshold(100.0, 17).state == ThresholdState.INCONCLUSIVE
     assert evaluate_precipitation_threshold(100.0, 23).state == ThresholdState.INCONCLUSIVE
     assert evaluate_precipitation_threshold(100.0, 24).state == ThresholdState.ABOVE
+    assert (
+        evaluate_precipitation_threshold(100.0, 24, complete_window=False).state
+        == ThresholdState.INCONCLUSIVE
+    )
 
 
 def test_invalid_configuration_is_rejected() -> None:

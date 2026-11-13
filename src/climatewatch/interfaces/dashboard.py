@@ -160,7 +160,7 @@ def create_handler(
                 result = evaluate_precipitation_threshold(
                     latest.get("precipitation_24h_mm"),
                     latest.get("precipitation_hours_24h", 0),
-                    required_hours=24 if latest.get("complete_24h_window") else 25,
+                    complete_window=bool(latest.get("complete_24h_window")),
                 )
                 value_text = (
                     "valor ausente"
