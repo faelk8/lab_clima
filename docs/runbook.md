@@ -25,7 +25,7 @@ Cada janela usa datas inclusivas. Limite default 7 dias, no máximo 30 requests 
 poetry run python scripts/resume_batches.py
 ```
 
-Estados `running` remanescentes de encerramento abrupto e `failed` são reexecutados pelos parâmetros persistidos. Lotes concluídos são ignorados. Antes de nova tentativa, verifique rede, causa no manifesto e espaço em disco. Não remova raw nem cache para tentar resolver erro de contrato.
+Estados `running` remanescentes de encerramento abrupto e `failed` são reexecutados pelos parâmetros persistidos, incluindo coordenadas e fuso, no manifesto selecionado. O claim com lock por lote serializa retomada e execução ativa; se o processo morrer, o sistema operacional libera o lock e a nova execução pode recuperar o estado. Lotes concluídos são ignorados. Antes de nova tentativa, verifique rede, causa no manifesto e espaço em disco. Não remova raw nem cache para tentar resolver erro de contrato.
 
 ## Falhas e recuperação
 
@@ -34,6 +34,7 @@ Estados `running` remanescentes de encerramento abrupto e `failed` são reexecut
 - HTTP 4xx não recuperável: sem retry; revisar intervalo, parâmetros e variáveis.
 - JSON válido mas contrato inválido: raw permanece no armazenamento, registro vai para `data/quarantine` e manifesto fica `failed` com referência ao raw. Corrigir código/contrato e retomar o mesmo lote.
 - Interrupção de processo: manifesto mostra `running`; o comando de retomada consulta de novo. Escritas JSON usam temporário e rename atômico.
+- Cobertura do backfill compara timestamps horários únicos normalizados com o intervalo esperado; duplicatas e horários extras são reportados separadamente e não compensam lacunas.
 - Falha de disco: não marcar lote como concluído; libere espaço por procedimento manual, preservando raw existente, depois retome.
 - Dados corrigidos pela fonte: `--force-refresh` no downloader ignora lote concluído; conteúdo com novo hash é acrescentado em `versions`, sem apagar versão anterior.
 
