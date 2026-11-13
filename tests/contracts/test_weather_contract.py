@@ -39,3 +39,19 @@ def test_local_timestamp_is_normalized_to_utc() -> None:
     payload = json.loads((FIXTURES / "hourly_nulls.json").read_text())
     record = parse_hourly_payload(payload, LOCATION)[0]
     assert record.measurement_time.isoformat() == "2024-01-01T03:00:00+00:00"
+
+
+def test_parser_accepts_requested_variable_subset() -> None:
+    """Permite resposta reduzida ao subconjunto solicitado pela CLI padrão."""
+    payload = {
+        "hourly": {
+            "time": ["2024-01-01T00:00"],
+            "temperature_2m": [20.0],
+            "precipitation": [0.5],
+        }
+    }
+    record = parse_hourly_payload(payload, LOCATION)[0]
+    assert record.temperature_c == 20.0
+    assert record.precipitation_mm == 0.5
+    assert record.humidity_pct is None
+    assert record.wind_speed_kmh is None

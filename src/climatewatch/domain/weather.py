@@ -67,10 +67,15 @@ def parse_hourly_payload(
         "relative_humidity_2m": "humidity_pct",
         "wind_speed_10m": "wind_speed_kmh",
     }
+    values_by_column: dict[str, list[Any]] = {}
     for key in columns:
         values = hourly.get(key)
+        if values is None:
+            values_by_column[key] = [None] * len(times)
+            continue
         if not isinstance(values, list) or len(values) != len(times):
-            raise ContractError(f"array hourly.{key} ausente ou desalinhado")
+            raise ContractError(f"array hourly.{key} desalinhado ou inválido")
+        values_by_column[key] = values
     try:
         ingested = ingested_at or datetime.now(timezone.utc)
         records = []
@@ -79,7 +84,7 @@ def parse_hourly_payload(
             if stamp.tzinfo is None:
                 stamp = stamp.replace(tzinfo=ZoneInfo(location.timezone_name))
             stamp = stamp.astimezone(timezone.utc)
-            values = {target: hourly[source][index] for source, target in columns.items()}
+            values = {target: values_by_column[source][index] for source, target in columns.items()}
             records.append(
                 WeatherRecord(location.location_id, stamp, **values, ingested_at=ingested)
             )
