@@ -27,7 +27,7 @@ poetry run python scripts/resume_batches.py
 
 Estados `running` remanescentes de encerramento abrupto e `failed` são reexecutados pelos parâmetros persistidos, incluindo coordenadas e fuso, no manifesto selecionado. O claim com lock por lote serializa retomada e execução ativa; se o processo morrer, o sistema operacional libera o lock e a nova execução pode recuperar o estado. Lotes concluídos são ignorados. Antes de nova tentativa, verifique rede, causa no manifesto e espaço em disco. Não remova raw nem cache para tentar resolver erro de contrato.
 
-Uma execução de retomada compartilha um orçamento de no máximo 30 requests e 100 MiB entre todos os lotes, incluindo retries. Ajuste com `--max-requests` e `--max-total-bytes`; lotes que ficarem sem orçamento permanecem pendentes para outra execução.
+Uma execução de retomada compartilha um orçamento de no máximo 30 requests e 100 MiB entre todos os lotes, incluindo retries. Ajuste com `--max-requests` e `--max-total-bytes`; lotes que ficarem sem orçamento permanecem pendentes para outra execução. A leitura do corpo é limitada ao saldo restante mais um byte sentinela, necessário para detectar resposta acima do limite; esse byte também entra na contagem.
 
 ## Falhas e recuperação
 
@@ -38,6 +38,6 @@ Uma execução de retomada compartilha um orçamento de no máximo 30 requests e
 - Interrupção de processo: manifesto mostra `running`; o comando de retomada consulta de novo. Escritas JSON usam temporário e rename atômico.
 - Cobertura do backfill compara timestamps horários únicos normalizados com o intervalo esperado; duplicatas e horários extras são reportados separadamente e não compensam lacunas.
 - Falha de disco: não marcar lote como concluído; libere espaço por procedimento manual, preservando raw existente, depois retome.
-- Dados corrigidos pela fonte: `--force-refresh` no downloader ignora lote concluído; conteúdo com novo hash é acrescentado em `versions`, sem apagar versão anterior.
+- Dados corrigidos pela fonte: `--force-refresh` no downloader ignora lote concluído; se a coleta falhar, a intenção fica no manifesto e a retomada também ignora o cache anterior. Conteúdo com novo hash é acrescentado em `versions`, sem apagar versão anterior.
 
 O processo garante idempotência de arquivos com conteúdo igual, não exactly-once transacional entre API, cache, raw e manifesto.
