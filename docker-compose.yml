@@ -1,0 +1,11 @@
+services:
+  climatewatch:
+    build: .
+    working_dir: /app
+    volumes:
+      - ./config:/app/config:ro
+      - ./data:/app/data
+      - ./spark-pipeline.yml:/app/spark-pipeline.yml:ro
+    environment:
+      SPARK_LOCAL_IP: 127.0.0.1
+    command: ["python", "-m", "climatewatch.interfaces.cli", "--help"]

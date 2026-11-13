@@ -1,0 +1,7 @@
+name: climatewatch_smoke
+libraries:
+  - glob:
+      include: pipelines/smoke/**
+storage: file:///tmp/climatewatch-sdp-storage
+configuration:
+  spark.sql.shuffle.partitions: "1"

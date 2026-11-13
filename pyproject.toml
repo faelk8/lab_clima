@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "climatewatch"
+version = "0.1.0"
+description = "Laboratório de dados climáticos históricos"
+authors = ["Rafael <rafael@example.invalid>"]
+packages = [{ include = "climatewatch", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+pyspark = {version = "4.1.0", extras = ["pipelines"]}
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3"
+ruff = "^0.8"
+mypy = "^1.13"
+
+[tool.poetry.scripts]
+climatewatch-download = "climatewatch.interfaces.cli:main"
+
+[build-system]
+requires = ["poetry-core>=2.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+mypy_path = "src"
