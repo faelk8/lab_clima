@@ -4,7 +4,7 @@ Projeto experimental local para coletar dados históricos abertos, preservar pro
 
 ## Estado
 
-Fases 1 e 2 implementadas e testadas localmente. A Fase 3 acrescenta o DAG Bronze → Silver → Gold e está em validação local. Consulte [arquitetura](docs/architecture.md), [contratos de dados](docs/data-contracts.md) e [fontes e licenças](docs/sources-and-licenses.md).
+Fases 1, 2 e 3 implementadas e testadas localmente. A Fase 3 acrescenta o DAG Bronze → Silver → Gold. Consulte [arquitetura](docs/architecture.md), [contratos de dados](docs/data-contracts.md) e [fontes e licenças](docs/sources-and-licenses.md).
 
 ## Requisitos e comandos
 
